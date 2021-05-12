@@ -2,7 +2,7 @@
 
 import simpleaudio as sa
 import json
-
+import argparse
 import requests
 import datetime
 
@@ -34,7 +34,7 @@ headers = {
 }
 
 
-def check_slots_by_district(district_ids) -> object:
+def check_slots_by_district(district_ids, options) -> object:
     available_slots = []
     for districtId in district_ids:
         today = datetime.datetime.now().strftime("%d-%m-%Y")
@@ -46,12 +46,12 @@ def check_slots_by_district(district_ids) -> object:
         json_data = response.json()
         for center in json_data["centers"]:
             for session in center["sessions"]:
-                if session["available_capacity"] > 0:
+                if session["available_capacity"] > 0 and (options.debug or filter_user_args(options, session)):
                     data = {
                         "center_id": center["center_id"],
                         "name": center["name"],
                         "address": center["address"],
-                        "state_name":center["state_name"],
+                        "state_name": center["state_name"],
                         "district_name": center["district_name"],
                         "block_name": center["block_name"],
                         "pincode": center["pincode"],
@@ -67,8 +67,23 @@ def check_slots_by_district(district_ids) -> object:
     return available_slots
 
 
+def filter_user_args(options, session):
+    return ((options.age18 and session["min_age_limit"] == 18) or
+            (options.age45 and session["min_age_limit"] == 45)) and \
+           ((options.covishield and session["vaccine"] == "COVISHIELD") or
+            (options.covaxin and session["vaccine"] == "COVAXIN"))
+
+
 if __name__ == '__main__':
-    availableSlots = check_slots_by_district(districtIds)
+    parser = argparse.ArgumentParser(description='Cowin Vaccine Slot Availability Checker')
+    parser.add_argument('-d', '--debug', help='Debug filter options', action="store_true")
+    parser.add_argument('-f', '--age45', help='Filter by 45+ age', action="store_true")
+    parser.add_argument('-e', '--age18', help='Filter by 18+ age', action="store_true")
+    parser.add_argument('-s', '--covaxin', help='Filter by covaxin', action="store_true")
+    parser.add_argument('-b', '--covishield', help='Filter by covishield', action="store_true")
+    user_options = parser.parse_args()
+    # print(user_options)
+    availableSlots = check_slots_by_district(districtIds, user_options)
     if len(availableSlots) > 0:
         wave_obj = sa.WaveObject.from_wave_file('speech.wav')
         play_obj = wave_obj.play()
