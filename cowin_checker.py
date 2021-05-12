@@ -42,6 +42,7 @@ def check_slots_by_district(district_ids) -> object:
         response = requests.request("GET", request_url, headers=headers, data=payload)
         if not response.ok:
             print(response.text)
+            return available_slots
         json_data = response.json()
         for center in json_data["centers"]:
             for session in center["sessions"]:
