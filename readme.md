@@ -4,6 +4,7 @@
 https://www.cowin.gov.in/home provide lot of info, from which checking available slots is difficult.
 So this script just check available slots across districts and beep a sound if available.
 
+# Setup Guide
 
 ## 1. pip3 install -r requirements.txt
 
