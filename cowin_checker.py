@@ -4,7 +4,8 @@ import simpleaudio as sa
 import json
 import argparse
 import requests
-import datetime
+from datetime import datetime
+from datetime import timedelta
 
 districtIds = [
     276,  # Bangalore Rural
@@ -37,32 +38,39 @@ headers = {
 def check_slots_by_district(district_ids, options) -> object:
     available_slots = []
     for districtId in district_ids:
-        today = datetime.datetime.now().strftime("%d-%m-%Y")
-        request_url = url.format(districtId, today)
-        response = requests.request("GET", request_url, headers=headers, data=payload)
-        if not response.ok:
-            print(response.text)
-            return available_slots
-        json_data = response.json()
-        for center in json_data["centers"]:
-            for session in center["sessions"]:
-                if session["available_capacity"] > 0 and (options.debug or filter_user_args(options, session)):
-                    data = {
-                        "center_id": center["center_id"],
-                        "name": center["name"],
-                        "address": center["address"],
-                        "state_name": center["state_name"],
-                        "district_name": center["district_name"],
-                        "block_name": center["block_name"],
-                        "pincode": center["pincode"],
-                        "lat": center["lat"],
-                        "long": center["long"],
-                        "from": center["from"],
-                        "to": center["to"],
-                        "fee_type": center["fee_type"],
-                        "session": session
-                    }
-                    available_slots.append(data)
+        today = datetime.now().strftime("%d-%m-%Y")
+        next_week = (datetime.now() + timedelta(days=7)).strftime("%d-%m-%Y")
+        fort_night = (datetime.now() + timedelta(days=11)).strftime("%d-%m-%Y")
+        for date_str in [today,next_week,fort_night]:
+            request_url = url.format(districtId, date_str)
+            response = requests.request("GET", request_url, headers=headers, data=payload)
+            if not response.ok:
+                print("Issue: {}".format(response.text))
+                return available_slots
+            json_data = response.json()
+            if options.debug:
+                print(f'centers count: {len(json_data["centers"])}')
+            for center in json_data["centers"]:
+                for session in center["sessions"]:
+                    if session["available_capacity"] > 0:
+                        data = {
+                            "center_id": center["center_id"],
+                            "name": center["name"],
+                            "address": center["address"],
+                            "state_name": center["state_name"],
+                            "district_name": center["district_name"],
+                            "block_name": center["block_name"],
+                            "pincode": center["pincode"],
+                            "lat": center["lat"],
+                            "long": center["long"],
+                            "from": center["from"],
+                            "to": center["to"],
+                            "fee_type": center["fee_type"],
+                            "session": session
+                        }
+                        print(json.dumps(data, indent=4, sort_keys=True))
+                        if options.debug or filter_user_args(options, session):
+                            available_slots.append(data)
 
     return available_slots
 
