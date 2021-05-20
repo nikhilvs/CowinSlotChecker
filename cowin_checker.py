@@ -25,7 +25,7 @@ headers = {
     'accept': 'application/json, text/plain, */*',
     'dnt': '1',
     'sec-ch-ua-mobile': '?0',
-    'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36',
+    'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36',
     'origin': 'https://www.cowin.gov.in',
     'sec-fetch-site': 'cross-site',
     'sec-fetch-mode': 'cors',
@@ -41,7 +41,7 @@ def check_slots_by_district(district_ids, options) -> object:
         today = datetime.now().strftime("%d-%m-%Y")
         next_week = (datetime.now() + timedelta(days=7)).strftime("%d-%m-%Y")
         fort_night = (datetime.now() + timedelta(days=11)).strftime("%d-%m-%Y")
-        for date_str in [today,next_week,fort_night]:
+        for date_str in [today, next_week, fort_night]:
             request_url = url.format(districtId, date_str)
             response = requests.request("GET", request_url, headers=headers, data=payload)
             if not response.ok:
@@ -68,7 +68,7 @@ def check_slots_by_district(district_ids, options) -> object:
                             "fee_type": center["fee_type"],
                             "session": session
                         }
-                        print(json.dumps(data, indent=4, sort_keys=True))
+                        # print(json.dumps(data, indent=4, sort_keys=True))
                         if options.debug or filter_user_args(options, session):
                             available_slots.append(data)
 
@@ -78,8 +78,11 @@ def check_slots_by_district(district_ids, options) -> object:
 def filter_user_args(options, session):
     return ((options.age18 and session["min_age_limit"] == 18) or
             (options.age45 and session["min_age_limit"] == 45)) and \
-           ((options.covishield and session["vaccine"] == "COVISHIELD") or
-            (options.covaxin and session["vaccine"] == "COVAXIN"))
+           (
+                   (options.covishield and session["vaccine"] == "COVISHIELD") or
+                   (options.covaxin and session["vaccine"] == "COVAXIN") or
+                   (options.sputnik and session["vaccine"] == "SPUTNIK")
+           )
 
 
 if __name__ == '__main__':
@@ -87,7 +90,8 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--debug', help='Debug filter options', action="store_true")
     parser.add_argument('-f', '--age45', help='Filter by 45+ age', action="store_true")
     parser.add_argument('-e', '--age18', help='Filter by 18+ age', action="store_true")
-    parser.add_argument('-s', '--covaxin', help='Filter by covaxin', action="store_true")
+    parser.add_argument('-c', '--covaxin', help='Filter by covaxin', action="store_true")
+    parser.add_argument('-s', '--sputnik', help='Filter by sputnik', action="store_true")
     parser.add_argument('-b', '--covishield', help='Filter by covishield', action="store_true")
     user_options = parser.parse_args()
     # print(user_options)
