@@ -82,7 +82,9 @@ def filter_user_args(options, session):
                    (options.covishield and session["vaccine"] == "COVISHIELD") or
                    (options.covaxin and session["vaccine"] == "COVAXIN") or
                    (options.sputnik and session["vaccine"] == "SPUTNIK")
-           )
+           ) and \
+           options.dose1 and session["available_capacity_dose1"] > 0 or \
+           options.dose2 and session["available_capacity_dose2"] > 0
 
 
 if __name__ == '__main__':
@@ -90,11 +92,13 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--debug', help='Debug filter options', action="store_true")
     parser.add_argument('-f', '--age45', help='Filter by 45+ age', action="store_true")
     parser.add_argument('-e', '--age18', help='Filter by 18+ age', action="store_true")
-    parser.add_argument('-c', '--covaxin', help='Filter by covaxin', action="store_true")
+    parser.add_argument('-c', '--covaxin', help='Filter by cvaxin', action="store_true")
     parser.add_argument('-s', '--sputnik', help='Filter by sputnik', action="store_true")
     parser.add_argument('-b', '--covishield', help='Filter by covishield', action="store_true")
+    parser.add_argument('-d1', '--dose1', help='Filter by dose1', action="store_true")
+    parser.add_argument('-d2', '--dose2', help='Filter by dose2', action="store_true")
     user_options = parser.parse_args()
-    # print(user_options)
+    print(user_options)
     availableSlots = check_slots_by_district(districtIds, user_options)
     if len(availableSlots) > 0:
         wave_obj = sa.WaveObject.from_wave_file('speech.wav')
